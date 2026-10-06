@@ -1,0 +1,267 @@
+# Practical 9 — Spark MLlib
+
+**Aim:** Demonstrate use of **Estimator, Transformer, and Param**.
+
+---
+
+## Step 1: Start Spark Shell
+
+Open **Terminal in Ubuntu**.
+
+Type:
+
+`spark-shell`
+
+Keep Spark Shell open. 
+
+---
+
+# PART A — Demonstrate Transformer
+
+We will use **VectorAssembler** as a Transformer.
+
+### Step 2: Import Required Library
+
+In Spark Shell:
+
+`import org.apache.spark.ml.feature.VectorAssembler`
+
+---
+
+### Step 3: Create Sample Data
+
+Enter:
+
+`val data = Seq(`
+`(1.0, 2.0, 10.0),`
+`(2.0, 3.0, 15.0),`
+`(3.0, 4.0, 20.0),`
+`(4.0, 5.0, 25.0)`
+`).toDF("feature1", "feature2", "label")`
+
+Display the data:
+
+`data.show()`
+
+
+
+---
+
+### Step 4: Create VectorAssembler
+
+Enter:
+
+`val assembler = new VectorAssembler().setInputCols(Array("feature1", "feature2")).setOutputCol("features")`
+
+VectorAssembler combines `feature1` and `feature2` into one `features` column. 
+
+---
+
+### Step 5: Transform the Data
+
+Enter:
+
+`val transformedData = assembler.transform(data)`
+
+Display the result:
+
+`transformedData.show()`
+
+
+
+---
+
+# PART B — Demonstrate Estimator
+
+We will use **LinearRegression** as an Estimator.
+
+### Step 6: Import Linear Regression
+
+Enter:
+
+`import org.apache.spark.ml.regression.LinearRegression`
+
+---
+
+### Step 7: Create Linear Regression Estimator
+
+Enter:
+
+`val lr = new LinearRegression().setFeaturesCol("features").setLabelCol("label")`
+
+Here, `LinearRegression` is the **Estimator**. 
+
+---
+
+### Step 8: Train the Model Using fit()
+
+Enter:
+
+`val model = lr.fit(transformedData)`
+
+Important:
+
+**Estimator + fit() → Model**
+
+The model created is `LinearRegressionModel`. 
+
+---
+
+### Step 9: Make Predictions
+
+Enter:
+
+`val predictions = model.transform(transformedData)`
+
+Display predictions:
+
+`predictions.show()`
+
+You will see a new column called **prediction**. 
+
+---
+
+# PART C — Demonstrate Param
+
+Parameters are used to configure an ML algorithm.
+
+Common Linear Regression parameters:
+
+* `maxIter` → Maximum number of iterations
+* `regParam` → Regularization parameter
+* `elasticNetParam` → Controls L1/L2 regularization 
+
+### Step 10: Create Linear Regression with Parameters
+
+Enter:
+
+`val lrParam = new LinearRegression().setFeaturesCol("features").setLabelCol("label").setMaxIter(10).setRegParam(0.01).setElasticNetParam(0.8)`
+
+---
+
+### Step 11: Display Parameters
+
+Enter:
+
+`println(lrParam.explainParams())`
+
+This displays the available parameters of Linear Regression.
+
+To display maximum iterations:
+
+`println(lrParam.getMaxIter)`
+
+To display regularization parameter:
+
+`println(lrParam.getRegParam)`
+
+
+
+---
+
+# PART D — Train Model Using Parameters
+
+### Step 12: Train the Model
+
+Enter:
+
+`val paramModel = lrParam.fit(transformedData)`
+
+---
+
+### Step 13: Make Predictions
+
+Enter:
+
+`val paramPredictions = paramModel.transform(transformedData)`
+
+---
+
+### Step 14: Display Results
+
+Enter:
+
+`paramPredictions.show()`
+
+
+
+---
+
+# Complete Practical — In One Sequence
+
+If you want to perform the whole practical continuously in **Spark Shell**, enter these in order:
+
+### Step 15: Import Libraries
+
+`import org.apache.spark.ml.feature.VectorAssembler`
+
+`import org.apache.spark.ml.regression.LinearRegression`
+
+### Step 16: Create Data
+
+`val data = Seq(`
+`(1.0, 2.0, 10.0),`
+`(2.0, 3.0, 15.0),`
+`(3.0, 4.0, 20.0),`
+`(4.0, 5.0, 25.0)`
+`).toDF("feature1", "feature2", "label")`
+
+`data.show()`
+
+### Step 17: Transformer
+
+`val assembler = new VectorAssembler()`
+
+`.setInputCols(Array("feature1", "feature2"))`
+
+`.setOutputCol("features")`
+
+`val transformedData = assembler.transform(data)`
+
+`transformedData.show()`
+
+### Step 18: Estimator
+
+`val lr = new LinearRegression()`
+
+`.setFeaturesCol("features")`
+
+`.setLabelCol("label")`
+
+`val model = lr.fit(transformedData)`
+
+`val predictions = model.transform(transformedData)`
+
+`predictions.show()`
+
+### Step 19: Param
+
+`val lrParam = new LinearRegression()`
+
+`.setFeaturesCol("features")`
+
+`.setLabelCol("label")`
+
+`.setMaxIter(10)`
+
+`.setRegParam(0.01)`
+
+`.setElasticNetParam(0.8)`
+
+### Step 20: Display Parameters
+
+`println(lrParam.explainParams())`
+
+`println("Maximum Iterations: " + lrParam.getMaxIter)`
+
+`println("Regularization Parameter: " + lrParam.getRegParam)`
+
+### Step 21: Train Model With Parameters
+
+`val paramModel = lrParam.fit(transformedData)`
+
+`val paramPredictions = paramModel.transform(transformedData)`
+
+`paramPredictions.show()`
+
+This is the complete sequence given in the PDF.
