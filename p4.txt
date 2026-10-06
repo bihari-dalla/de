@@ -1,0 +1,46 @@
+#prac4
+#Spark Aggregate
+#Aim: Group rows in DataFrame, Get Count distinct on DataFrame, Add row number
+#to DataFrame, Select the first row of each group
+
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.expressions.Window
+
+val spark = SparkSession.builder()
+  .appName("DataFrameOperations")
+  .master("local[*]")
+  .getOrCreate()
+
+import spark.implicits._
+
+val empDF = Seq(
+  (101, "Rahul", "IT", 50000),
+  (102, "Priya", "HR", 60000),
+  (103, "Amit", "IT", 45000),
+  (104, "Neha", "HR", 70000),
+  (105, "Karan", "Sales", 40000)
+).toDF("ID", "Name", "Department", "Salary")
+
+// 1. Group rows and calculate total salary
+val groupDF = empDF.groupBy("Department").sum("Salary")
+groupDF.show()
+
+// 2. Count distinct departments
+empDF.select(countDistinct("Department")).show()
+
+// 3. Add row number within each department
+val windowSpec =
+  Window.partitionBy("Department").orderBy(desc("Salary"))
+
+val rowDF = empDF.withColumn(
+  "RowNumber",
+  row_number().over(windowSpec)
+)
+
+rowDF.show()
+
+// 4. Select the first row of each department
+val firstRowDF = rowDF.filter(col("RowNumber") === 1)
+
+firstRowDF.show()
