@@ -1,0 +1,188 @@
+#Practical 1A
+Practical a)
+Folder for Practical Files
+
+Create:
+D:\SparkPractical
+
+Inside create:
+
+sample.txt
+Hello Spark
+RDD Example
+Scala Programming
+Hello World
+
+students.csv
+id,name,marks
+1,Ram,85
+2,Shyam,90
+3,Sita,95
+
+# Parallelize and Create RDD
+> val data = List(10,20,30,40,50)
+> val rdd = sc.parallelize(data)
+> rdd.collect()
+
+# Read Text File
+> val textRDD = sc.textFile("D:/SparkPractical/sample.txt")
+> textRDD.collect()
+> textRDD.count()
+
+# Read CSV File
+> val csvRDD = sc.textFile("D:/SparkPractical/students.csv")
+> csvRDD.collect()
+> val header = csvRDD.first()
+> val dataRDD = csvRDD.filter(row => row != header)
+> dataRDD.collect()
+
+# RDD Transformations - Map
+> val transformRDD = sc.parallelize(List(1,2,3,4,5))
+> val result = transformRDD.map(x => x*2)
+> result.collect()
+
+# RDD Transformations - Filter
+> transformRDD.filter(x => x%2==0).collect()
+
+# RDD Transformations - FlatMap
+> val lines = sc.parallelize(List("Apache Spark","Big Data"))
+> lines.flatMap(x => x.split(" ")).collect()
+
+# Actions - Count
+> rdd.count()
+
+# Actions - First
+> rdd.first()
+
+# Actions - Collect
+> rdd.collect()
+
+# Actions - Reduce
+> rdd.reduce((a,b)=>a+b)
+
+# Pair Functions
+> val pairRDD = sc.parallelize(
+> List(
+> ("A",10),
+> ("B",20),
+> ("A",15),
+> ("B",25)
+> ))
+
+# ReduceByKey
+> pairRDD.reduceByKey(_+_).collect()
+
+# Keys
+> pairRDD.keys.collect()
+
+# Values
+> pairRDD.values.collect()
+
+# Repartition
+> val partitionRDD = sc.parallelize(1 to 100,2)
+> partitionRDD.getNumPartitions
+> val repRDD = partitionRDD.repartition(4)
+> repRDD.getNumPartitions
+
+# Coalesce
+> val coalRDD = repRDD.coalesce(2)
+> coalRDD.getNumPartitions
+
+# Shuffle Partitions
+> val shuffleRDD = sc.parallelize(
+> List(
+> ("A",1),
+> ("A",2),
+> ("B",3),
+> ("B",4)
+> ))
+> shuffleRDD.reduceByKey(_+_).collect()
+
+# Broadcast Variables
+> val broadcastVar = sc.broadcast(Array(10,20,30))
+> broadcastVar.value
+> rdd.map(x => x + broadcastVar.value(0)).collect()
+
+# Accumulator Variables
+# Accumulator code is not provided in the practical source
+
+# Convert RDD to DataFrame
+> import spark.implicits._
+> val studentRDD = sc.parallelize(
+> List(
+> (1,"Ram",85),
+> (2,"Shyam",90),
+> (3,"Sita",95)
+> ))
+> val df = studentRDD.toDF("ID","Name","Marks")
+> df.show()
+> df.printSchema()
+
+------------------------------------------------------------------------------------
+
+#Practical No 1B
+# Read Multiple Text Files into RDD
+> val rdd = sc.textFile(
+> "file:///D:/SparkPractical/file1.txt," +
+> "file:///D:/SparkPractical/file2.txt," +
+> "file:///D:/SparkPractical/file3.txt"
+> )
+> rdd.collect().foreach(println)
+
+# Read CSV File into RDD
+> val csvRDD = sc.textFile("file:///D:/SparkPractical/students.csv")
+> csvRDD.collect().foreach(println)
+
+# Split CSV Fields
+> val studentRDD = csvRDD.map(line => line.split(","))
+> studentRDD.collect().foreach(x => println(x.mkString(" | ")))
+
+# Create an Empty RDD
+> val emptyRDD = sc.emptyRDD[String]
+> println("Number of elements: " + emptyRDD.count())
+
+# RDD Pair Functions
+> val pairRDD = sc.parallelize(List(
+> ("A",10),
+> ("B",20),
+> ("A",30),
+> ("B",40),
+> ("C",50)
+> ))
+
+# collect()
+> pairRDD.collect().foreach(println)
+
+# keys()
+> pairRDD.keys.collect().foreach(println)
+
+# values()
+> pairRDD.values.collect().foreach(println)
+
+# reduceByKey()
+> val sumRDD = pairRDD.reduceByKey(_ + _)
+> sumRDD.collect().foreach(println)
+
+# sortByKey()
+> pairRDD.sortByKey().collect().foreach(println)
+
+# groupByKey()
+> pairRDD.groupByKey().collect().foreach(println)
+
+# Generate DataFrame from RDD
+> val studentRDD = sc.parallelize(List(
+> (1,"Riya",85),
+> (2,"Siya",90),
+> (3,"Niya",78)))
+
+# Import Spark implicit conversions for toDF()
+> import spark.implicits._
+
+# Convert RDD to DataFrame
+> val df = studentRDD.toDF("ID","Name","Marks")
+
+# Display DataFrame
+> df.show()
+
+# Display DataFrame Schema
+> df.printSchema()
