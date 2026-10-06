@@ -1,0 +1,312 @@
+#prac5a
+Aim: To demonstrate Spark SQL joins, joining multiple DataFrames, and performing inner joins using Spark SQL and DataFrame API.
+
+```scala
+// Step 1: Import Required Libraries
+import spark.implicits._
+
+// Step 2: Create Employee DataFrame
+val employees = Seq(
+  (101,"Amit",10),
+  (102,"Priya",20),
+  (103,"Rahul",30),
+  (104,"Neha",20),
+  (105,"Rohan",40)
+).toDF("EmpID","Name","DeptID")
+
+employees.show()
+
+// Step 3: Create Department DataFrame
+val departments = Seq(
+  (10,"HR"),
+  (20,"Finance"),
+  (30,"IT"),
+  (50,"Marketing")
+).toDF("DeptID","Department")
+
+departments.show()
+
+// Step 4: Register DataFrames as SQL Tables
+employees.createOrReplaceTempView("Employee")
+departments.createOrReplaceTempView("Department")
+
+// Step 5: View Available Tables
+spark.sql("SHOW TABLES").show()
+
+// Step 6: Perform Inner Join Using Spark SQL
+spark.sql("""
+SELECT EmpID, Name, Department
+FROM Employee e
+INNER JOIN Department d
+ON e.DeptID = d.DeptID
+""").show()
+
+// Step 7: Perform Inner Join Using DataFrame API
+employees.join(
+  departments,
+  employees("DeptID") === departments("DeptID"),
+  "inner"
+).show()
+
+// Step 8: Create Salary DataFrame
+val salary = Seq(
+  (101,50000),
+  (102,60000),
+  (103,55000),
+  (104,70000),
+  (105,65000)
+).toDF("EmpID","Salary")
+
+salary.show()
+
+// Step 9: Join Multiple DataFrames
+employees
+  .join(departments, "DeptID")
+  .join(salary, "EmpID")
+  .show()
+
+// Step 10: Register Salary Table
+salary.createOrReplaceTempView("Salary")
+
+// Step 11: Join Three Tables Using Spark SQL
+spark.sql("""
+SELECT e.EmpID,
+       e.Name,
+       d.Department,
+       s.Salary
+FROM Employee e
+INNER JOIN Department d
+ON e.DeptID = d.DeptID
+INNER JOIN Salary s
+ON e.EmpID = s.EmpID
+""").show()
+```
+
+-----------------------------------------------------------------
+
+#prav5b
+Aim: To demonstrate Date and Time Functions, String Functions, Array Functions, Map Functions, JSON Functions, and Sort Functions in Spark SQL.
+
+```scala
+// 1. DATE AND TIME FUNCTIONS
+
+// Step 1: Import Required Libraries
+import spark.implicits._
+import org.apache.spark.sql.functions._
+
+// Step 2: Create Sample Data
+val data = Seq(
+  (1,"Deepa","2025-07-01"),
+  (2,"Rahul","2024-12-15"),
+  (3,"Priya","2023-01-20")
+)
+
+val df = data.toDF("ID","Name","JoiningDate")
+
+// Step 3: Convert String to Date
+val dateDF = df.withColumn(
+  "JoiningDate",
+  to_date(col("JoiningDate"),"yyyy-MM-dd")
+)
+
+// Step 4: Display Data
+dateDF.show()
+
+// Step 5: Current Date
+dateDF.select(current_date()).show()
+
+// Step 6: Current Timestamp
+dateDF.select(current_timestamp()).show(false)
+
+// Step 7: Add 10 Days
+dateDF.select(
+  col("Name"),
+  date_add(col("JoiningDate"),10).alias("After10Days")
+).show()
+
+// Step 8: Subtract 15 Days
+dateDF.select(
+  col("Name"),
+  date_sub(col("JoiningDate"),15)
+).show()
+
+// Step 9: Difference Between Dates
+dateDF.select(
+  datediff(current_date(),col("JoiningDate")).alias("DaysWorked")
+).show()
+
+// Step 10: Extract Year
+dateDF.select(year(col("JoiningDate"))).show()
+
+// Step 11: Extract Month
+dateDF.select(month(col("JoiningDate"))).show()
+
+
+// 2. STRING FUNCTIONS
+
+// Step 1: Display Original Data
+df.show()
+
+// Step 2: Upper Case
+df.select(upper(col("Name"))).show()
+
+// Step 3: Lower Case
+df.select(lower(col("Name"))).show()
+
+// Step 4: Length
+df.select(length(col("Name"))).show()
+
+// Step 5: Concatenate
+df.select(
+  concat(col("Name"),lit(" MCC"))
+).show(false)
+
+// Step 6: Substring
+df.select(
+  substring(col("Name"),1,3)
+).show()
+
+// Step 7: Replace Characters
+df.select(
+  regexp_replace(col("Name"),"a","@")
+).show()
+
+// Step 8: Trim Spaces
+val spaceDF = Seq(" Spark ").toDF("Text")
+
+spaceDF.select(trim(col("Text"))).show(false)
+
+
+// 3. ARRAY FUNCTIONS
+
+// Step 1: Create Data
+val arrayData = Seq(
+  (1,Array("Java","Python","Spark")),
+  (2,Array("Scala","SQL"))
+)
+
+val arrayDF = arrayData.toDF("ID","Skills")
+
+// Step 2: Display Data
+arrayDF.show(false)
+
+// Step 3: Array Size
+arrayDF.select(size(col("Skills"))).show()
+
+// Step 4: First Element
+arrayDF.select(element_at(col("Skills"),1)).show()
+
+// Step 5: Explode Array
+arrayDF.select(
+  col("ID"),
+  explode(col("Skills"))
+).show()
+
+
+// 4. MAP FUNCTIONS
+
+// Step 1: Create Map Column
+val mapData = Seq(
+  (1,Map("Math"->90,"Science"->95)),
+  (2,Map("Math"->85,"Science"->88))
+)
+
+val mapDF = mapData.toDF("ID","Marks")
+
+// Step 2: Display Data
+mapDF.show(false)
+
+// Step 3: Get Keys
+mapDF.select(map_keys(col("Marks"))).show(false)
+
+// Step 4: Get Values
+mapDF.select(map_values(col("Marks"))).show(false)
+
+// Step 5: Access Specific Value
+mapDF.select(
+  col("Marks")("Math")
+).show()
+
+
+// 5. JSON FUNCTIONS
+
+// Step 1: Create JSON Data
+val json = Seq(
+  """{"name":"Deepa","age":35}""",
+  """{"name":"Rahul","age":28}"""
+)
+
+val jsonDF = json.toDF("json")
+
+// Step 2: Display Data
+jsonDF.show(false)
+
+// Step 3: Extract Name
+jsonDF.select(
+  get_json_object(col("json"),"$.name").alias("Name")
+).show()
+
+// Step 4: Extract Age
+jsonDF.select(
+  get_json_object(col("json"),"$.age").alias("Age")
+).show()
+
+// Step 5: Create Schema
+import org.apache.spark.sql.types._
+
+val schema = StructType(Seq(
+  StructField("name",StringType),
+  StructField("age",IntegerType)
+))
+
+// Step 6: Convert JSON String into Struct
+jsonDF.select(
+  from_json(col("json"),schema).alias("Person")
+).show(false)
+
+// Step 7: Expand Struct into Columns
+val personDF = jsonDF.select(
+  from_json(col("json"),schema).alias("Person")
+)
+
+val expandedDF = personDF.select("Person.*")
+
+expandedDF.show()
+
+// Step 8: Filter Age Greater Than 30
+expandedDF.filter(col("age") > 30).show()
+
+// Step 9: Create Person DataFrame
+val people = Seq(
+  ("Deepa",35),
+  ("Rahul",28)
+).toDF("Name","Age")
+
+// Step 10: Convert Columns into JSON
+people.select(
+  to_json(struct(col("Name"),col("Age"))).alias("JSON")
+).show(false)
+
+
+// 6. SORT FUNCTIONS
+
+// Step 1: Create Data
+val salaryData = Seq(
+  ("Deepa",50000),
+  ("Rahul",70000),
+  ("Priya",60000)
+)
+
+val salaryDF = salaryData.toDF("Name","Salary")
+
+// Step 2: Ascending Order
+salaryDF.orderBy("Salary").show()
+
+// Step 3: Descending Order
+salaryDF.orderBy(desc("Salary")).show()
+
+// Step 4: Sort by Multiple Columns
+salaryDF.sort(
+  col("Salary").desc,
+  col("Name").asc
+).show()
