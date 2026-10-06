@@ -1,0 +1,201 @@
+#prac3a
+// Step 1: Import Required Packages
+
+import spark.implicits._
+import org.apache.spark.sql.functions._
+
+
+// Step 2: Create Sample Employee DataFrame
+
+val empDF = Seq(
+  (101, "Rahul", 50000),
+  (102, "Priya", 60000),
+  (103, "Amit", 55000)
+).toDF("ID", "Name", "Salary")
+
+empDF.show()
+
+
+// 1. Create an Array (ArrayType) Column
+
+val arrayDF = empDF.withColumn(
+  "EmployeeInfo",
+  array(col("ID"), col("Salary"))
+)
+
+arrayDF.show(false)
+
+arrayDF.printSchema()
+
+
+// 2. Create a Map (MapType) Column
+
+val mapDF = empDF.withColumn(
+  "EmployeeMap",
+  map(
+    lit("ID"), col("ID"),
+    lit("Salary"), col("Salary")
+  )
+)
+
+mapDF.show(false)
+
+
+// 3. Convert an Array into Columns
+
+arrayDF.select(
+  col("Name"),
+  col("EmployeeInfo")(0).as("EmployeeID"),
+  col("EmployeeInfo")(1).as("EmployeeSalary")
+).show()
+
+
+// 4. Create an Array of Struct Column
+
+val structDF = empDF.withColumn(
+  "EmployeeStruct",
+  array(
+    struct(col("ID"), col("Name"), col("Salary")),
+    struct(col("ID"), col("Name"), col("Salary"))
+  )
+)
+
+structDF.show(false)
+
+
+// 5. Explode an Array Column
+
+arrayDF.select(
+  col("Name"),
+  explode(col("EmployeeInfo")).as("Value")
+).show()
+
+
+// 6. Explode a Map Column
+
+mapDF.select(
+  col("Name"),
+  explode(col("EmployeeMap"))
+).show(false)
+
+
+// 7. Explode an Array of Structs
+
+structDF.select(
+  col("Name"),
+  explode(col("EmployeeStruct")).as("Details")
+).show(false)
+
+
+// Expand Struct
+
+structDF.select(
+  explode(col("EmployeeStruct")).as("Details")
+).select("Details.*").show()
+
+
+// 8. Explode an Array of Maps
+
+val mapArrayDF = Seq(
+  (
+    "Rahul",
+    Array(
+      Map("Math" -> 90),
+      Map("Science" -> 95)
+    )
+  ),
+  (
+    "Priya",
+    Array(
+      Map("Math" -> 85),
+      Map("Science" -> 92)
+    )
+  )
+).toDF("Name", "Marks")
+
+
+// Display DataFrame
+
+mapArrayDF.show(false)
+
+
+// Explode Array
+
+mapArrayDF.select(
+  col("Name"),
+  explode(col("Marks")).as("SubjectMarks")
+).show(false)
+
+
+// Further Explode the Map
+
+mapArrayDF.select(
+  col("Name"),
+  explode(col("Marks")).as("SubjectMarks")
+)
+.select(
+  col("Name"),
+  explode(col("SubjectMarks"))
+)
+.show(false)
+
+------------------------------------------------------
+
+#prac3b
+// Practical 3_b
+// Working with Nested Arrays in Spark (Scala)
+
+// 1. Import Required Packages
+import spark.implicits._
+import org.apache.spark.sql.functions._
+
+
+// 2. Create a DataFrame with a Nested Array
+
+val studentDF = Seq(
+  ("Rahul", Array(
+    Array("Math", "Science"),
+    Array("English", "History")
+  )),
+  ("Priya", Array(
+    Array("Java", "Python"),
+    Array("SQL", "Spark")
+  ))
+).toDF("Name", "Subjects")
+
+studentDF.show(false)
+
+
+// 3. Check Schema
+
+studentDF.printSchema()
+
+
+// 4. Explode Nested Arrays into Rows
+
+val explodeDF = studentDF.select(
+  col("Name"),
+  explode(col("Subjects")).as("SubjectGroup")
+)
+
+explodeDF.show(false)
+
+
+// 5. Flatten Nested Array into a Single Array
+
+val flattenDF = studentDF.withColumn(
+  "AllSubjects",
+  flatten(col("Subjects"))
+)
+
+flattenDF.show(false)
+
+
+// 6. Convert Array of Strings into a String Column
+
+val stringDF = flattenDF.withColumn(
+  "SubjectList",
+  concat_ws(", ", col("AllSubjects"))
+)
+
+stringDF.show(false)
