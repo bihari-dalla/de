@@ -1,0 +1,344 @@
+PRACTICAL 7(a)
+
+AIM:
+To install Spark Shell in Ubuntu and perform read and write operations on CSV, JSON, Parquet, XML and Avro files.
+
+
+PART 1: INSTALL SPARK SHELL IN UBUNTU
+
+Step 1: Update Ubuntu
+
+sudo apt update
+
+
+Step 2: Install Java 11
+
+sudo apt install openjdk-11-jdk -y
+
+java -version
+
+
+Step 3: Install Scala
+
+sudo apt install scala -y
+
+scala -version
+
+
+Step 4: Download Spark 3.5.8
+
+cd ~/Downloads
+
+wget https://archive.apache.org/dist/spark/spark-3.5.8/spark-3.5.8-bin-hadoop3.tgz
+
+tar -xzf spark-3.5.8-bin-hadoop3.tgz
+
+sudo mv spark-3.5.8-bin-hadoop3 /opt/spark
+
+
+Step 5: Set Environment Variables
+
+nano ~/.bashrc
+
+Add these lines at the end:
+
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+export SPARK_HOME=/opt/spark
+export PATH=$PATH:$JAVA_HOME/bin:$SPARK_HOME/bin:$SPARK_HOME/sbin
+
+Save using:
+
+Ctrl + O
+Enter
+Ctrl + X
+
+Then run:
+
+source ~/.bashrc
+
+
+Step 6: Verify
+
+echo $JAVA_HOME
+
+echo $SPARK_HOME
+
+spark-shell
+
+
+PART 2: CREATE SPARKPRACTICAL DIRECTORY
+
+Step 1:
+
+mkdir SparkPractical
+
+cd SparkPractical
+
+
+Step 2: Create Folders
+
+mkdir csv json xml parquet avro
+
+ls
+
+
+PART 3: CREATE CSV FILE
+
+Step 1:
+
+cd ~/SparkPractical/csv
+
+nano employees.csv
+
+
+Step 2: Paste the following data:
+
+ID,Name,Department,Salary
+101,Amit,IT,50000
+102,Neha,HR,45000
+103,Rahul,Sales,60000
+104,Pooja,IT,55000
+
+
+Step 3: Save
+
+Ctrl + O
+Enter
+Ctrl + X
+
+
+Step 4: Verify
+
+cat employees.csv
+
+
+PART 4: CREATE JSON FILE
+
+Step 1:
+
+cd ~/SparkPractical/json
+
+nano employees.json
+
+
+Step 2: Paste:
+
+{"ID":101,"Name":"Amit","Department":"IT","Salary":50000}
+{"ID":102,"Name":"Neha","Department":"HR","Salary":45000}
+{"ID":103,"Name":"Rahul","Department":"Sales","Salary":60000}
+{"ID":104,"Name":"Pooja","Department":"IT","Salary":55000}
+
+
+Step 3: Save
+
+Ctrl + O
+Enter
+Ctrl + X
+
+
+Step 4: Verify
+
+cat employees.json
+
+
+PART 5: CREATE XML FILE
+
+Step 1:
+
+cd ~/SparkPractical/xml
+
+nano employees.xml
+
+
+Step 2: Paste:
+
+<employees>
+  <employee>
+    <ID>101</ID>
+    <Name>Amit</Name>
+    <Department>IT</Department>
+    <Salary>50000</Salary>
+  </employee>
+  <employee>
+    <ID>102</ID>
+    <Name>Neha</Name>
+    <Department>HR</Department>
+    <Salary>45000</Salary>
+  </employee>
+  <employee>
+    <ID>103</ID>
+    <Name>Rahul</Name>
+    <Department>Sales</Department>
+    <Salary>60000</Salary>
+  </employee>
+  <employee>
+    <ID>104</ID>
+    <Name>Pooja</Name>
+    <Department>IT</Department>
+    <Salary>55000</Salary>
+  </employee>
+</employees>
+
+
+Step 3: Save
+
+Ctrl + O
+Enter
+Ctrl + X
+
+
+Step 4: Verify
+
+cat employees.xml
+
+
+PRACTICAL 1: READ AND WRITE CSV
+
+Step 1: Start Spark Shell
+
+spark-shell
+
+
+Step 2: Read CSV
+
+val csvDF = spark.read.option("header","true").option("inferSchema","true").csv("/home/user/SparkPractical/csv/employees.csv")
+
+
+Step 3: Display CSV
+
+csvDF.show()
+
+
+Step 4: Write CSV
+
+csvDF.write.mode("overwrite").option("header","true").csv("/home/user/SparkPractical/csv/output")
+
+
+PRACTICAL 2: READ AND WRITE JSON
+
+Step 1: Read JSON
+
+val jsonDF = spark.read.json("/home/user/SparkPractical/json/employees.json")
+
+
+Step 2: Display JSON
+
+jsonDF.show()
+
+
+Step 3: Display Schema
+
+jsonDF.printSchema()
+
+
+Step 4: Write JSON
+
+jsonDF.write.mode("overwrite").json("/home/user/SparkPractical/json/output")
+
+
+PRACTICAL 3: PROCESS JSON
+
+Step 1: Filter IT Employees
+
+jsonDF.filter($"Department" === "IT").show()
+
+
+Step 2: Select Name and Salary
+
+jsonDF.select("Name","Salary").show()
+
+
+Step 3: Find Average Salary
+
+jsonDF.groupBy("Department").avg("Salary").show()
+
+
+PRACTICAL 4: WRITE AND READ PARQUET
+
+Step 1: Write Parquet
+
+jsonDF.write.mode("overwrite").parquet("/home/user/SparkPractical/parquet/output")
+
+
+Step 2: Read Parquet
+
+val parquetDF = spark.read.parquet("/home/user/SparkPractical/parquet/output")
+
+
+Step 3: Display Parquet
+
+parquetDF.show()
+
+
+PRACTICAL 5: READ AND WRITE XML
+
+Step 1: Exit Spark
+
+:quit
+
+
+Step 2: Start Spark with XML Package
+
+spark-shell --packages com.databricks:spark-xml_2.12:0.18.0
+
+
+Step 3: Read XML
+
+val xmlDF = spark.read.format("xml").option("rowTag","employee").load("/home/user/SparkPractical/xml/employees.xml")
+
+
+Step 4: Display XML
+
+xmlDF.show()
+
+
+Step 5: Write XML
+
+xmlDF.write.format("xml").mode("overwrite").option("rootTag","employees").option("rowTag","employee").save("/home/user/SparkPractical/xml/output")
+
+
+PRACTICAL 6: READ AND WRITE AVRO
+
+Step 1: Exit Spark
+
+:quit
+
+
+Step 2: Start Spark with Avro Package
+
+spark-shell --packages org.apache.spark:spark-avro_2.12:3.5.8
+
+
+Step 3: Read CSV
+
+val csvDF = spark.read.option("header","true").option("inferSchema","true").csv("/home/user/SparkPractical/csv/employees.csv")
+
+
+Step 4: Display CSV
+
+csvDF.show()
+
+
+Step 5: Write Avro
+
+csvDF.write.format("avro").mode("overwrite").save("/home/user/SparkPractical/avro/output")
+
+
+Step 6: Read Avro
+
+val avroDF = spark.read.format("avro").load("/home/user/SparkPractical/avro/output")
+
+
+Step 7: Display Avro
+
+avroDF.show()
+
+
+Step 8: Exit Spark
+
+:quit
+
+
+Step 9: Check Avro Output in Ubuntu Terminal
+
+ls /home/user/SparkPractical/avro/output
