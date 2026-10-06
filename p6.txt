@@ -1,0 +1,120 @@
+#prac6
+Aim: To demonstrate the use of Spark SQL functions such as createDataFrame(), where(), filter(), withColumn(), withColumnRenamed(), drop(), distinct(), groupBy(), join(), map(), mapPartitions(), pivot(), union(), collect(), cache(), persist() and UDF.
+
+```scala
+// Step 1: Import Required Libraries
+import org.apache.spark.sql._
+import org.apache.spark.sql.functions._
+import spark.implicits._
+
+// Step 2: Create Sample Data
+val employeeData = Seq(
+  (101,"Rahul","HR",50000),
+  (102,"Priya","IT",60000),
+  (103,"Amit","IT",55000),
+  (104,"Neha","Finance",65000),
+  (105,"Rahul","HR",50000)
+)
+
+// Step 3: Create DataFrame
+val empDF = employeeData.toDF(
+  "ID","Name","Department","Salary"
+)
+empDF.show()
+
+// Step 4: where() and filter()
+empDF.where(col("Salary") > 55000).show()
+empDF.filter(col("Salary") > 55000).show()
+
+// Step 5: withColumn()
+val newDF = empDF.withColumn(
+  "Bonus",
+  col("Salary") * 0.10
+)
+newDF.show()
+
+// Step 6: withColumnRenamed()
+empDF.withColumnRenamed(
+  "Department","Dept"
+).show()
+
+// Step 7: drop()
+empDF.drop("Salary").show()
+
+// Step 8: distinct()
+empDF.select("Name").distinct().show()
+
+// Step 9: groupBy()
+empDF.groupBy("Department")
+  .sum("Salary")
+  .show()
+
+// Step 10: join()
+val locationDF = Seq(
+  ("HR","Mumbai"),
+  ("IT","Pune"),
+  ("Finance","Delhi")
+).toDF("Department","City")
+
+empDF.join(locationDF, "Department").show()
+
+// Step 11: map()
+empDF.rdd.map(row =>
+  row.getString(1).toUpperCase
+).collect().foreach(println)
+
+// Step 12: mapPartitions()
+empDF.rdd.mapPartitions(partition =>
+  partition.map(row =>
+    row.getString(1).toUpperCase
+  )
+).collect().foreach(println)
+
+// Step 13: pivot()
+val sales = Seq(
+  ("HR","Jan",1000),
+  ("HR","Feb",1200),
+  ("IT","Jan",2000),
+  ("IT","Feb",2500)
+).toDF("Department","Month","Sales")
+
+sales.groupBy("Department")
+  .pivot("Month")
+  .sum("Sales")
+  .show()
+
+// Step 14: union()
+val df1 = Seq(
+  (1,"A"),
+  (2,"B")
+).toDF("ID","Name")
+
+val df2 = Seq(
+  (3,"C"),
+  (4,"D")
+).toDF("ID","Name")
+
+df1.union(df2).show()
+
+// Step 15: collect()
+val data = empDF.collect()
+data.foreach(println)
+
+// Step 16: cache()
+empDF.cache()
+empDF.count()
+
+// Step 17: persist()
+import org.apache.spark.storage.StorageLevel
+
+empDF.persist(StorageLevel.MEMORY_AND_DISK)
+empDF.count()
+
+// Step 18: UDF (User Defined Function)
+val bonus = udf((salary: Int) => salary + 5000)
+
+empDF.withColumn(
+  "NewSalary",
+  bonus(col("Salary"))
+).show()
+```
