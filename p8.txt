@@ -1,0 +1,345 @@
+# Practical 8 — Practical of Spark Streaming
+
+## A) Output Modes: Append, Complete and Update
+
+### Step 1: Start Spark Shell
+
+**Terminal 1**
+
+Start Spark Shell:
+
+`spark-shell`
+
+Check Spark version:
+
+`Spark.version`
+
+**Do not close this terminal.**
+
+---
+
+### Step 2: Create a Streaming Input Directory
+
+**Terminal 2**
+
+Create directory:
+
+`mkdir -p /home/user/SparkPractical/stream/input`
+
+Check directory:
+
+`ls /home/user/SparkPractical/stream/input`
+
+Initially, it should be empty.
+
+---
+
+## A. Append Mode
+
+### Step 3: Create a Streaming DataFrame
+
+**Terminal 1**
+
+`val lines = spark.readStream.format("text").load("/home/user/SparkPractical/stream/input")`
+
+Check schema:
+
+`lines.printSchema()`
+
+---
+
+### Step 4: Write the Stream Using Append Mode
+
+**Terminal 1**
+
+`val appendQuery = lines.writeStream.format("console").outputMode("append").option("truncate","false").start()`
+
+The query is now running.
+
+---
+
+### Step 5: Add the First File
+
+**Terminal 2**
+
+`echo "Hello Spark" > /home/user/SparkPractical/stream/input/file1.txt`
+
+Wait a few seconds.
+
+Spark will display the new data.
+
+---
+
+### Step 6: Add Another File
+
+**Terminal 2**
+
+`echo "Hello Scala" > /home/user/SparkPractical/stream/input/file2.txt`
+
+Spark will process the new file.
+
+---
+
+### Step 7: Stop Append Query
+
+**Terminal 1**
+
+`appendQuery.stop()`
+
+---
+
+# B. Complete Mode
+
+### Step 8: Import Spark Functions
+
+**Terminal 1**
+
+`import org.apache.spark.sql.functions._`
+
+---
+
+### Step 9: Create Words DataFrame
+
+`val words = lines.select(explode(split(col("value"), " ")).alias("word"))`
+
+---
+
+### Step 10: Create Word Count
+
+`val wordCounts = words.groupBy("word").count()`
+
+---
+
+### Step 11: Start Complete Mode
+
+`val completeQuery = wordCounts.writeStream.format("console").outputMode("complete").option("truncate","false").start()`
+
+---
+
+### Step 12: Add Another File
+
+**Terminal 2**
+
+`echo "Hello Spark" > /home/user/SparkPractical/stream/input/file3.txt`
+
+Spark will show the complete current word-count table.
+
+---
+
+### Step 13: Stop Complete Mode
+
+**Terminal 1**
+
+`completeQuery.stop()`
+
+---
+
+# C. Update Mode
+
+### Step 14: Start Update Mode
+
+**Terminal 1**
+
+`val updateQuery = wordCounts.writeStream.format("console").outputMode("update").option("truncate","false").start()`
+
+---
+
+### Step 15: Add Another File
+
+**Terminal 2**
+
+`echo "Spark Spark" > /home/user/SparkPractical/stream/input/file4.txt`
+
+Spark will show the changed word counts.
+
+---
+
+### Step 16: Stop Update Mode
+
+**Terminal 1**
+
+`updateQuery.stop()`
+
+---
+
+# PART 2 — Read JSON Files From Directory
+
+### Step 1: Create JSON Directory
+
+**Terminal 2**
+
+`mkdir -p /home/user/SparkPractical/json/input`
+
+---
+
+### Step 2: Create First JSON File
+
+**Terminal 2**
+
+`gedit /home/user/SparkPractical/json/input/employees1.json`
+
+Enter:
+
+`{"id":1,"name":"Amit","department":"IT","salary":50000}`
+
+`{"id":2,"name":"Neha","department":"HR","salary":45000}`
+
+`{"id":3,"name":"Raj","department":"IT","salary":55000}`
+
+Save the file.
+
+---
+
+### Step 3: Define JSON Schema
+
+**Terminal 1**
+
+`import org.apache.spark.sql.types._`
+
+Then:
+
+`val employeeSchema = new StructType().add("id","integer").add("name","string").add("department","string").add("salary","integer")`
+
+---
+
+### Step 4: Read JSON as a Stream
+
+`val employeeStream = spark.readStream.schema(employeeSchema).json("/home/user/SparkPractical/json/input")`
+
+---
+
+### Step 5: Check Schema
+
+`employeeStream.printSchema()`
+
+---
+
+### Step 6: Display JSON Data
+
+`val jsonQuery = employeeStream.writeStream.format("console").outputMode("append").option("truncate","false").start()`
+
+---
+
+### Step 7: Add Another JSON File
+
+**Terminal 2**
+
+`gedit /home/user/SparkPractical/json/input/employees2.json`
+
+Enter:
+
+`{"id":4,"name":"Pooja","department":"Finance","salary":60000}`
+
+`{"id":5,"name":"Kiran","department":"IT","salary":58000}`
+
+Save and exit.
+
+Spark automatically detects the new file.
+
+---
+
+### Step 8: Stop JSON Streaming
+
+**Terminal 1**
+
+`jsonQuery.stop()`
+
+---
+
+# PART 3 — Read Data From TCP Socket
+
+### Step 1: Install Netcat
+
+**Terminal 2**
+
+First check:
+
+`nc -h`
+
+If command is not found:
+
+`sudo apt update`
+
+Then:
+
+`sudo apt install netcat-openbsd`
+
+---
+
+### Step 2: Start TCP Server
+
+**Terminal 2**
+
+`nc -lk 9999`
+
+The terminal will wait for incoming data.
+
+---
+
+### Step 3: Create Socket Streaming DataFrame
+
+**Terminal 1**
+
+`val socketDF = spark.readStream.format("socket").option("host","localhost").option("port",9999).load()`
+
+---
+
+### Step 4: Check Schema
+
+`socketDF.printSchema()`
+
+---
+
+### Step 5: Start Streaming Query
+
+`val socketQuery = socketDF.writeStream.format("console").outputMode("append").option("truncate","false").start()`
+
+---
+
+### Step 6: Send Data Through TCP
+
+**Terminal 2**
+
+Type:
+
+`Hello Spark`
+
+Press **Enter**.
+
+Then:
+
+`Hello Scala`
+
+Press **Enter**.
+
+Then:
+
+`Welcome to Data Streaming`
+
+Press **Enter**.
+
+Spark will display the incoming data in **Terminal 1**.
+
+---
+
+### Step 7: Stop the Query
+
+**Terminal 1**
+
+`socketQuery.stop()`
+
+---
+
+### Step 8: Exit Spark
+
+` :quit`
+
+---
+
+### Step 9: Stop Netcat
+
+**Terminal 2**
+
+Press **Ctrl + C**.
+
+This is the complete sequence from your Practical 8 PDF, keeping the original order and commands.
